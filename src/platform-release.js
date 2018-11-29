@@ -139,10 +139,16 @@ function * updateJsSnapshot (repo, version, commit) {
         if (hasBuiltJs !== version) {
             yield repoutil.forEachRepo([cordovaJsRepo], function * () {
                 yield gitutil.stashAndPop(cordovaJsRepo, function * () {
-                    // git fetch and update master for cordovajs
+                    // git fetch and update cordova-js master branch
+                    // and clean npm install
+                    // before rebuilding cordova.js
+                    shelljs.rm('-fr', 'node_modules');
                     yield repoupdate.updateRepos([cordovaJsRepo], ['master'], false);
                     yield gitutil.gitCheckout('master');
-                    yield executil.execHelper(executil.ARGS('grunt compile:' + repo.id + ' --platformVersion=' + version), false, true);
+                    yield executil.execHelper(executil.ARGS('npm install'), false, true);
+                    yield executil.execHelper(
+                        executil.ARGS('npx grunt compile:' + repo.id + ' --platformVersion=' + version), false, true);
+                    shelljs.rm('-fr', 'node_modules');
                     hasBuiltJs = version;
                 });
             });
