@@ -20,15 +20,16 @@ under the License.
 // Verify that npm install was run before importing anything else
 require('./check-npm-install-util');
 
-var co = require('co');
-var optimist = require('optimist');
+const co = require('co');
+const optimist = require('optimist');
 
-var apputil = require('./apputil');
+const executil = require('./executil');
+const apputil = require('./apputil');
 
 const lazyRequire = require('./lazy-require-util');
 
 module.exports = function () {
-    var repoCommands = [
+    const repoCommands = [
         {
             name: 'repo-clone',
             desc: 'Clones git repositories as siblings of cordova-coho (unless --no-chdir or --global is used).',
@@ -58,7 +59,8 @@ module.exports = function () {
             desc: 'Update specified git remote to point to corresponding apache github repo',
             entryPoint: lazyRequire('./remote-update')
         }];
-    var releaseCommands = [{
+
+    const releaseCommands = [{
         name: 'prepare-platform-release-branch',
         desc: 'Branches, updates JS, updates VERSION. Safe to run multiple times.',
         entryPoint: lazyRequire('./platform-release', 'prepareReleaseBranchCommand')
@@ -119,7 +121,8 @@ module.exports = function () {
         desc: 'Unpublishes last nightly versions for all specified repositories',
         entryPoint: lazyRequire('./npm-publish', 'unpublishNightly')
     }];
-    var otherCommands = [{
+
+    const otherCommands = [{
         name: 'list-pulls',
         desc: 'Shows a list of GitHub pull requests for all specified repositories.',
         entryPoint: lazyRequire('./list-pulls')
@@ -160,9 +163,9 @@ module.exports = function () {
             console.log(require('../package').version);
             yield Promise.resolve();
         }
-    }
-    ];
-    var commandMap = {};
+    }];
+
+    const commandMap = {};
     function addToCommandMap (cmd) {
         commandMap[cmd.name] = cmd;
     }
@@ -172,7 +175,7 @@ module.exports = function () {
     // aliases:
     commandMap['foreach'] = commandMap['for-each'];
 
-    var usage = 'Usage: $0 command [options]\n\n';
+    let usage = 'Usage: $0 command [options]\n\n';
     function addCommandUsage (cmd) {
         usage += '    ' + cmd.name + ': ' + cmd.desc + '\n';
     }
@@ -192,8 +195,9 @@ module.exports = function () {
     usage += '    ./cordova-coho/coho for-each -r plugins "git clean -fd"\n';
     usage += '    ./cordova-coho/coho last-week --me';
 
-    var command = commandMap[optimist.argv._[0]];
-    var opts = optimist
+    const command = commandMap[optimist.argv._[0]];
+
+    let opts = optimist
         .usage(usage)
         .options('verbose', {
             desc: 'Enable verbose logging',
@@ -221,8 +225,9 @@ module.exports = function () {
             default: true
         });
     }
-    var argv = opts.check(function (argv) {
-        var commandName = argv._[0];
+
+    const argv = opts.check(function (argv) {
+        const commandName = argv._[0];
         if (!commandName) {
             throw 'No command specified.';
         }
@@ -233,13 +238,16 @@ module.exports = function () {
             throw 'No repositories specified, see list-repos';
         }
     }).argv;
+
     if (!command.noChdir) {
         // Change directory to be a sibling of coho.
         apputil.initWorkingDir(argv.chdir);
     }
+
     if (argv.verbose) {
         executil.verbose = true;
     }
-    var entry = command.entryPoint;
+
+    const entry = command.entryPoint;
     co(entry).then();
 };
